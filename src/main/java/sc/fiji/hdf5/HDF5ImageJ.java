@@ -129,12 +129,8 @@ public class HDF5ImageJ
         case EXTERNAL_LINK: 
           // update type to external link type - proceed through switch (no break)
           // external link target paths are formatted: "EXTERNAL::/path/to/file::/path/to/object"
-          String[] extl_paths = info.tryGetSymbolicLinkTarget().split("::");
-          IJ.log("Path to dataset : " + extl_paths[1]); // this is for us "raw/stack_0_channel_0_obj_right/Cam_Right_00000.lux.h5", it should instead have the base directory of the "parent" main h5 file, maybe recoverable from the reader
-          
+          String[] extl_paths = info.tryGetSymbolicLinkTarget().split("::");          
           String datasetPath = Paths.get(h5file_parentDir, extl_paths[1]).toString();
-          IJ.log(datasetPath);
-          
           IHDF5Reader extl_reader = HDF5Factory.openForReading(datasetPath);
           HDF5LinkInformation extl_target = extl_reader.object().getLinkInformation(extl_paths[2]);
           type = extl_target.getType();
