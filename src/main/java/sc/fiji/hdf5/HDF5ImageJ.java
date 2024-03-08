@@ -38,6 +38,7 @@ import ch.systemsx.cisd.base.mdarray.MDShortArray;
 import ch.systemsx.cisd.base.mdarray.MDFloatArray;
 import hdf.hdf5lib.exceptions.HDF5Exception;
 import java.awt.HeadlessException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -113,23 +114,32 @@ public class HDF5ImageJ
 
   static void recursiveGetInfo(IHDF5Reader reader, HDF5LinkInformation link, ArrayList<DataSetInfo> dataSets)
   {
+	
+	String h5file_parentDir = reader.file().getFile().getParent(); // used for EXTERNAL_LINK datasets only
+	
     List<HDF5LinkInformation> members = reader.object().getGroupMemberInformation(link.getPath(), true);
     //    DefaultMutableTreeNode node = new DefaultMutableTreeNode(link.getName());
-
+    
     for (HDF5LinkInformation info : members)
     {
       HDF5ObjectType type = info.getType();
       IJ.log(info.getPath() + ":" + type);
       switch (type)
       {
-        case EXTERNAL_LINK:
+        case EXTERNAL_LINK: 
           // update type to external link type - proceed through switch (no break)
           // external link target paths are formatted: "EXTERNAL::/path/to/file::/path/to/object"
           String[] extl_paths = info.tryGetSymbolicLinkTarget().split("::");
-          IHDF5Reader extl_reader = HDF5Factory.openForReading(extl_paths[1]);
+          IJ.log("Path to dataset : " + extl_paths[1]); // this is for us "raw/stack_0_channel_0_obj_right/Cam_Right_00000.lux.h5", it should instead have the base directory of the "parent" main h5 file, maybe recoverable from the reader
+          
+          String datasetPath = Paths.get(h5file_parentDir, extl_paths[1]).toString();
+          IJ.log(datasetPath);
+          
+          IHDF5Reader extl_reader = HDF5Factory.openForReading(datasetPath);
           HDF5LinkInformation extl_target = extl_reader.object().getLinkInformation(extl_paths[2]);
           type = extl_target.getType();
           extl_reader.close();
+        
         case DATASET:
           HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(info.getPath());
           HDF5DataTypeInformation dsType = dsInfo.getTypeInformation();
